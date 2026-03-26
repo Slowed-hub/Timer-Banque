@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<!--
+  MIT License
+  Copyright (c) 2026 Slowed-hub
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+-->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crimson Desert — Timer Banque</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%230d0a07'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='40'>🪙%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9932a;
+    --gold-light: #f0c060;
+    --gold-pale: #f7e8b8;
+    --crimson: #8b1a1a;
+    --crimson-dark: #5a0a0a;
+    --bg: #0d0a07;
+    --parchment: #1a1208;
+    --border: #3a2a10;
+    --text: #d4b87a;
+    --text-dim: #8a7050;
+    --silver: #b0c4d0;
+    --silver-light: #daeaf5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Crimson Pro', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2rem 1rem 3rem;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(139,26,26,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(60,20,0,0.3) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Grain overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .header .eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+  }
+
+  .header h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    color: var(--gold-light);
+    text-shadow: 0 0 30px rgba(201,147,42,0.4), 0 2px 4px rgba(0,0,0,0.8);
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+  }
+
+  .header .subtitle {
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 1rem;
+    font-weight: 300;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0.8rem 0 1.5rem;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+  }
+  .divider .gem {
+    color: var(--gold);
+    font-size: 0.7rem;
+  }
+
+  /* Main card */
+  .card {
+    background: linear-gradient(160deg, #1c1408 0%, #110d05 100%);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(201,147,42,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  /* Info pills */
+  .info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .info-pill {
+    background: rgba(201,147,42,0.06);
+    border: 1px solid rgba(201,147,42,0.15);
+    border-radius: 3px;
+    padding: 0.9rem;
+    text-align: center;
+  }
+
+  .info-pill .val {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    color: var(--gold-light);
+    font-weight: 600;
+    line-height: 1;
+    display: block;
+  }
+
+  .info-pill .lbl {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-style: italic;
+    display: block;
+    margin-top: 0.3rem;
+  }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+
+  /* Input group */
+  .input-group {
+    margin-bottom: 1.4rem;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-bottom: 0.5rem;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+  }
+
+  input[type="number"], input[type="time"] {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--gold-pale);
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    padding: 0.6rem 0.9rem;
+    flex: 1;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(201,147,42,0.12);
+  }
+
+  input[type="number"]::-webkit-inner-spin-button { opacity: 0.4; }
+
+  /* Time picker row */
+  .time-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  /* Calc button */
+  .btn {
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-dark) 100%);
+    border: 1px solid rgba(139,26,26,0.8);
+    border-top-color: rgba(200,60,60,0.3);
+    color: var(--gold-pale);
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(139,26,26,0.3);
+    margin-top: 0.6rem;
+  }
+
+  .btn:hover {
+    background: linear-gradient(135deg, #a02020 0%, #6a1010 100%);
+    box-shadow: 0 4px 25px rgba(139,26,26,0.5);
+    transform: translateY(-1px);
+  }
+
+  .btn:active { transform: translateY(0); }
+
+  /* Result */
+  .result-card {
+    background: linear-gradient(160deg, #0e1a12 0%, #091008 100%);
+    border: 1px solid rgba(80,160,80,0.2);
+    border-radius: 4px;
+    padding: 1.6rem 1.8rem;
+    margin-top: 1.5rem;
+    text-align: center;
+    display: none;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #4a9a4a, transparent);
+  }
+
+  .result-card.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #5a9a5a;
+    margin-bottom: 0.6rem;
+  }
+
+  .result-time {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(2rem, 8vw, 3rem);
+    color: #90d890;
+    text-shadow: 0 0 20px rgba(100,200,100,0.3);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+
+  .result-date {
+    font-size: 1rem;
+    color: #5a9a5a;
+    font-style: italic;
+    margin-bottom: 0.8rem;
+  }
+
+  .result-detail {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* Sleep advice */
+  .sleep-card {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1.2rem;
+    margin-top: 1.5rem;
+    display: none;
+    animation: fadeIn 0.4s ease 0.1s both;
+  }
+
+  .sleep-card.visible { display: block; }
+
+  .sleep-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.8rem;
+  }
+
+  .sleep-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .sleep-list li {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+  }
+
+  .sleep-list li .bullet {
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  /* Reference table */
+  .ref-card {
+    background: linear-gradient(160deg, #1c1408 0%, #110d05 100%);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,147,42,0.08);
+  }
+
+  .ref-card .section-title { margin-bottom: 1rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  th {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid rgba(58,42,16,0.4);
+    color: var(--text);
+    font-style: italic;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  td:last-child {
+    text-align: right;
+    color: var(--gold-light);
+    font-style: normal;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+  }
+
+  /* Risk table */
+  .risk-low { color: #6ab56a !important; }
+  .risk-med { color: var(--gold-light) !important; }
+  .risk-high { color: #d06060 !important; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 1rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 400px) {
+    .info-row { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .time-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <p class="eyebrow">Royaume de Pywel</p>
+    <h1>Timer Banque</h1>
+    <p class="subtitle">Crimson Desert</p>
+    <div class="divider"><span class="gem">◆</span></div>
+  </div>
+
+  <!-- Info rapide -->
+  <div class="info-row">
+    <div class="info-pill">
+      <span class="val">5 min</span>
+      <span class="lbl">= 1 heure in-game</span>
+    </div>
+    <div class="info-pill">
+      <span class="val">3 jours</span>
+      <span class="lbl">refresh dividendes</span>
+    </div>
+    <div class="info-pill">
+      <span class="val">2h réelles</span>
+      <span class="lbl">≈ 1 jour in-game</span>
+    </div>
+    <div class="info-pill">
+      <span class="val">6h réelles</span>
+      <span class="lbl">pour 3 jours in-game</span>
+    </div>
+  </div>
+
+  <!-- Calculateur -->
+  <div class="card">
+    <p class="section-title">⏳ Le banquier te dit de revenir dans…</p>
+
+    <div class="input-group">
+      <label>Heures in-game restantes (affiché par le banquier)</label>
+      <div style="display:flex;align-items:center;gap:0.8rem;">
+        <input type="number" id="hoursLeft" min="0" max="999" placeholder="ex: 15" value="" style="font-size:1.6rem;text-align:center;padding:0.8rem;">
+        <span style="color:var(--text-dim);font-style:italic;white-space:nowrap;">heures in-game</span>
+      </div>
+    </div>
+
+    <div class="input-group" style="margin-bottom:0;">
+      <label>Heure actuelle (IRL) — mise à jour automatique</label>
+      <div style="display:flex;align-items:center;gap:0.8rem;">
+        <input type="time" id="startTime" style="font-size:1.2rem;">
+        <button onclick="refreshTime()" style="background:rgba(201,147,42,0.1);border:1px solid var(--border);color:var(--gold);padding:0.5rem 0.8rem;border-radius:3px;cursor:pointer;font-size:1rem;" title="Rafraîchir">🔄</button>
+      </div>
+    </div>
+
+    <button class="btn" onclick="calculate()">⚔ À quelle heure revenir ?</button>
+
+    <div class="result-card" id="result">
+      <p class="result-label">☽ Revenir à la banque à</p>
+      <div class="result-time" id="resultTime">--:--</div>
+      <div class="result-date" id="resultDate"></div>
+      <div class="result-detail" id="resultDetail"></div>
+
+      <!-- Mute switch -->
+      <div style="margin-top:1.2rem;display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;">
+        <button id="muteBtn" onclick="toggleMute()" style="background:rgba(201,147,42,0.1);border:1px solid rgba(201,147,42,0.3);color:var(--gold);font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.1em;padding:0.45rem 1rem;border-radius:3px;cursor:pointer;transition:all 0.2s;">🔔 Son activé</button>
+        <span id="alertStatus" style="font-size:0.75rem;color:var(--text-dim);font-style:italic;"></span>
+      </div>
+    </div>
+
+    <!-- Alert banner -->
+    <div id="alertBanner" style="display:none;margin-top:1rem;background:linear-gradient(135deg,#3a1a00,#1a0a00);border:1px solid var(--gold);border-radius:4px;padding:1.2rem;text-align:center;animation:fadeIn 0.4s ease;">
+      <div style="font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:var(--gold-light);text-shadow:0 0 20px rgba(201,147,42,0.5);">⚔ RETOURNE À LA BANQUE !</div>
+      <div style="font-size:0.85rem;color:var(--text-dim);font-style:italic;margin-top:0.4rem;">Ton rafraîchissement est imminent.</div>
+    </div>
+
+    <div class="sleep-card" id="sleepAdvice">
+      <p class="sleep-title">💤 Stratégie sommeil recommandée</p>
+      <ul class="sleep-list" id="sleepList"></ul>
+    </div>
+  </div>
+
+  <!-- Table de référence -->
+  <div class="ref-card">
+    <p class="section-title">📜 Référence rapide</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Temps in-game</th>
+          <th>Temps réel</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1 heure</td><td>5 min</td></tr>
+        <tr><td>12 heures</td><td>1 h</td></tr>
+        <tr><td>1 jour (24h)</td><td>2 h</td></tr>
+        <tr><td>3 jours (refresh)</td><td>6 h</td></tr>
+        <tr><td>15 jours (chg. stratégie)</td><td>30 h</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Niveaux de risque -->
+  <div class="ref-card">
+    <p class="section-title">💰 Niveaux d'investissement</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Risque</th>
+          <th>Rendement</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="risk-low">Faible</td><td class="risk-low">+15-20%</td></tr>
+        <tr><td class="risk-med">Moyen</td><td class="risk-med">+25-35%</td></tr>
+        <tr><td class="risk-high">Élevé</td><td class="risk-high">+50-55% ★</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.78rem;color:var(--text-dim);font-style:italic;margin-top:0.8rem;">
+      ★ Sauvegarde manuelle juste avant le refresh → recharger si perte (résultat aléatoire au rechargement)
+    </p>
+  </div>
+
+  <div class="footer">
+    1 lingot d'or = 500 pièces d'argent à la banque — ne jamais vendre à un marchand (190 seulement)
+    <div style="margin-top:0.8rem;color:var(--gold);font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:0.2em;">— Slowed —</div>
+    <div style="margin-top:0.4rem;color:var(--text-dim);font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;">MIT License © 2026 Slowed-hub</div>
+    <div style="margin-top:0.8rem;color:var(--text-dim);font-size:0.75rem;font-style:italic;line-height:1.5;max-width:420px;margin-left:auto;margin-right:auto;">
+      Outil communautaire non officiel — Crimson Desert est une marque déposée de Pearl Abyss. Cet outil n'est ni affilié, ni approuvé par Pearl Abyss.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Init time input to now
+  const now = new Date();
+  document.getElementById('startTime').value =
+    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  // ─── Alert system ───────────────────────────────────────────────
+  let alertTarget = null;      // Date object of when to alert
+  let alertTimer = null;
+  let muted = false;
+  let alertFired = false;
+  const WARN_BEFORE_MS = 5 * 60 * 1000; // 5 min real before
+
+  // Ask notification permission on load
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  function toggleMute() {
+    muted = !muted;
+    const btn = document.getElementById('muteBtn');
+    btn.textContent = muted ? '🔇 Son coupé' : '🔔 Son activé';
+    btn.style.opacity = muted ? '0.5' : '1';
+  }
+
+  function playAlert() {
+    if (muted) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // Three soft chimes
+      [0, 0.35, 0.7].forEach((delay, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = [660, 880, 1100][i];
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + delay + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.6);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.7);
+      });
+    } catch(e) {}
+  }
+
+  function sendNotification() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('⚔ Crimson Desert — Banque', {
+        body: 'Retourne voir le banquier ! Ton rafraîchissement est prêt.',
+        icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Gold_bar_icon.svg/120px-Gold_bar_icon.svg.png'
+      });
+    }
+  }
+
+  function flashPage() {
+    document.body.style.transition = 'background 0.3s';
+    let count = 0;
+    const iv = setInterval(() => {
+      document.body.style.background = count % 2 === 0 ? '#1a0a00' : '#0d0a07';
+      count++;
+      if (count >= 6) { clearInterval(iv); document.body.style.background = ''; }
+    }, 300);
+  }
+
+  function checkAlert() {
+    if (!alertTarget || alertFired) return;
+    const now = new Date();
+    const diff = alertTarget - now;
+    if (diff <= WARN_BEFORE_MS && diff > 0) {
+      alertFired = true;
+      playAlert();
+      sendNotification();
+      flashPage();
+      document.getElementById('alertBanner').style.display = 'block';
+    }
+    if (diff <= 0) {
+      alertFired = true;
+      playAlert();
+      sendNotification();
+      flashPage();
+      document.getElementById('alertBanner').style.display = 'block';
+    }
+  }
+
+  setInterval(checkAlert, 15000); // check every 15s
+  // ────────────────────────────────────────────────────────────────
+
+  function refreshTime() {
+    const now = new Date();
+    document.getElementById('startTime').value =
+      String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  }
+
+  // Auto-refresh every minute
+  setInterval(refreshTime, 60000);
+
+  function calculate() {
+    const timeVal = document.getElementById('startTime').value;
+    const hours = parseInt(document.getElementById('hoursLeft').value);
+
+    if (!timeVal) { alert('Heure actuelle manquante.'); return; }
+    if (isNaN(hours) || hours < 0) { alert('Entre le nombre d\'heures in-game.'); return; }
+
+    const [h, m] = timeVal.split(':').map(Number);
+    const realMinutesTotal = hours * 5; // 1h in-game = 5 min réelles
+
+    const arrivalDate = new Date();
+    arrivalDate.setHours(h, m + realMinutesTotal, 0, 0);
+
+    const arrH = String(arrivalDate.getHours()).padStart(2,'0');
+    const arrM = String(arrivalDate.getMinutes()).padStart(2,'0');
+
+    const weekdays = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    const months = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+    const sameDay = arrivalDate.toDateString() === new Date().toDateString();
+    const dateStr = sameDay
+      ? "Aujourd'hui"
+      : `${weekdays[arrivalDate.getDay()]} ${arrivalDate.getDate()} ${months[arrivalDate.getMonth()]}`;
+
+    document.getElementById('resultTime').textContent = `${arrH}:${arrM}`;
+    document.getElementById('resultDate').textContent = dateStr;
+
+    const hh = Math.floor(realMinutesTotal / 60);
+    const mm = realMinutesTotal % 60;
+    let detail = `${hours}h in-game = `;
+    if (hh > 0) detail += `${hh}h `;
+    if (mm > 0) detail += `${mm} min`;
+    detail += ' dans la vraie vie';
+    document.getElementById('resultDetail').textContent = detail;
+
+    document.getElementById('result').classList.add('visible');
+
+    // Set alert target
+    alertTarget = arrivalDate;
+    alertFired = false;
+    document.getElementById('alertBanner').style.display = 'none';
+    document.getElementById('alertStatus').textContent = `⏰ Alerte active — son + notification 5 min avant le retour`;
+
+    buildSleepAdvice(0, hours, h, m);
+    document.getElementById('sleepAdvice').classList.add('visible');
+  }
+
+  function buildSleepAdvice(days, hours, startH, startM) {
+    const totalIngameHours = hours;
+    const list = document.getElementById('sleepList');
+    list.innerHTML = '';
+
+    if (totalIngameHours <= 0) {
+      list.innerHTML = '<li><span class="bullet">◆</span> Le timer est déjà expiré — va collecter tes dividendes !</li>';
+      return;
+    }
+
+    let remaining = totalIngameHours;
+    let sleeps = 0;
+    let activitiesNeeded = 0;
+
+    // How many full 12h sleeps + cooldown cycles?
+    // Each cycle: sleep 12h + wait cooldown 10h = 22h in-game, costs 60+50=110 real minutes
+    // Last sleep: just 12h, then go
+    while (remaining > 0) {
+      if (remaining >= 12) {
+        sleeps++;
+        remaining -= 12;
+        if (remaining >= 10) { // need cooldown
+          activitiesNeeded++;
+          remaining -= 10;
+        } else {
+          remaining = 0;
+        }
+      } else {
+        // less than 12h left, just wait (5 min per in-game hour)
+        break;
+      }
+    }
+
+    const items = [];
+
+    if (sleeps === 0) {
+      const waitReal = Math.round(totalIngameHours * 5);
+      items.push(`Attends simplement <strong>${waitReal} minutes</strong> en jouant.`);
+    } else {
+      items.push(`Dors <strong>${sleeps} fois</strong> (12h in-game chaque fois = 1h réelle par sommeil).`);
+      if (activitiesNeeded > 0)
+        items.push(`Entre chaque sommeil, joue <strong>50 min réelles</strong> (cooldown = 10h in-game).`);
+      const leftH = remaining > 0 ? Math.round(remaining * 5) : 0;
+      if (leftH > 0)
+        items.push(`Après les sommeils, joue encore <strong>${leftH} min</strong> puis va à la banque.`);
+      items.push(`Sauvegarde manuellement juste avant la fin du timer !`);
+    }
+
+    items.forEach(text => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="bullet">◆</span> <span>${text}</span>`;
+      list.appendChild(li);
+    });
+  }
+</script>
+</body>
+</html>
